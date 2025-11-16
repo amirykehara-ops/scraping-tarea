@@ -1,29 +1,25 @@
 org: amirykehara
 service: api-web-scraping
-
 provider:
   name: aws
-  runtime: python3.13
+  runtime: python3.12  # Cambié a 3.12 para estabilidad en Lambda
+  # Default memory size for functions (default: 1024MB)
   memorySize: 1024
   timeout: 20
   iam:
-    role: arn:aws:iam::773506457076:role/LabRole
-  environment:
-    DYNAMO_TABLE: TablaWebScrapping
-
+    role: arn:aws:iam::773506457076:role/LabRole  # Asegúrate de que este rol tenga permisos para DynamoDB (dynamodb:*)
 functions:
   scrape_table:
-    handler: scrap_table.lambda_handler
-    package:
-      include:
-        - ./**
-    events:
-      - http:
-          path: /scrape/table
-          method: get
-          cors: true
-          integration: lambda
-
+    handler: scrap_table.lambda_handler  # Asegúrate de que el nombre del archivo y la función coincidan
+package:
+  include:
+    - ./**
+    # Incluir todo el contenido del directorio
+events:
+  - http:
+      path: /scrape/table
+      method: get
+      cors: true
 resources:
   Resources:
     TablaWebScrapping:
