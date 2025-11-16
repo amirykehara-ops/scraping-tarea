@@ -1,0 +1,129 @@
+{
+  "/home/ubuntu/scraping-tarea/serverless.yml": {
+    "versionFramework": "4.23.0",
+    "servicePath": "/home/ubuntu/scraping-tarea/serverless.yml",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "org": "amirykehara",
+      "service": "api-web-scraping",
+      "provider": {
+        "name": "aws",
+        "runtime": "python3.10",
+        "memorySize": 1024,
+        "timeout": 20,
+        "iam": {
+          "role": "arn:aws:iam::773506457076:role/LabRole"
+        },
+        "stage": "dev",
+        "region": "us-east-1",
+        "versionFunctions": true
+      },
+      "custom": {
+        "pythonRequirements": {
+          "dockerizePip": "non-linux"
+        }
+      },
+      "functions": {
+        "scrape_table": {
+          "handler": "scrap_table.lambda_handler",
+          "events": [
+            {
+              "http": {
+                "path": "/scrape/table",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ],
+          "name": "api-web-scraping-dev-scrape_table"
+        }
+      },
+      "package": {
+        "include": [
+          "./**"
+        ],
+        "artifactsS3KeyDirname": "serverless/api-web-scraping/dev/code-artifacts"
+      },
+      "resources": {
+        "Resources": {
+          "TablaWebScrapping": {
+            "Type": "AWS::DynamoDB::Table",
+            "Properties": {
+              "TableName": "TablaWebScrapping",
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "id",
+                  "AttributeType": "S"
+                }
+              ],
+              "KeySchema": [
+                {
+                  "AttributeName": "id",
+                  "KeyType": "HASH"
+                }
+              ],
+              "BillingMode": "PAY_PER_REQUEST"
+            }
+          }
+        }
+      }
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "python3.10",
+      "memorySize": 1024,
+      "timeout": 20,
+      "iam": {
+        "role": "arn:aws:iam::773506457076:role/LabRole"
+      },
+      "stage": "dev",
+      "region": "us-east-1",
+      "versionFunctions": true
+    },
+    "dashboard": {
+      "isEnabledForService": false,
+      "requiredAuthentication": false,
+      "orgFeaturesInUse": null,
+      "orgObservabilityIntegrations": null,
+      "serviceAppId": null,
+      "serviceProvider": null,
+      "instanceParameters": null
+    },
+    "serviceRawFile": "org: amirykehara\nservice: api-web-scraping\nprovider:\n  name: aws\n  runtime: python3.10  # <- FIX: Cambiado a 3.10 (tu local)\n  memorySize: 1024\n  timeout: 20\n  iam:\n    role: arn:aws:iam::773506457076:role/LabRole\ncustom:\n  pythonRequirements:\n    dockerizePip: non-linux  # Mantiene compatibilidad para pip en Ubuntu\nfunctions:\n  scrape_table:\n    handler: scrap_table.lambda_handler\n    events:\n      - http:\n          path: /scrape/table\n          method: get\n          cors: true\npackage:\n  include:\n    - ./**\nresources:\n  Resources:\n    TablaWebScrapping:\n      Type: AWS::DynamoDB::Table\n      Properties:\n        TableName: TablaWebScrapping\n        AttributeDefinitions:\n          - AttributeName: id\n            AttributeType: S\n        KeySchema:\n          - AttributeName: id\n            KeyType: HASH\n        BillingMode: PAY_PER_REQUEST\n",
+    "command": [
+      "invoke"
+    ],
+    "options": {
+      "function": "scrape_table"
+    },
+    "orgId": "2de534f6-b161-4c8c-9dc7-10627bcf7004",
+    "orgName": "amirykehara",
+    "userId": "BY9gzvXRWsJMGMBzcF",
+    "userName": "amirykehara",
+    "serviceProviderAwsAccountId": "773506457076",
+    "serviceProviderAwsCfStackName": "api-web-scraping-dev",
+    "serviceProviderAwsCfStackId": "arn:aws:cloudformation:us-east-1:773506457076:stack/api-web-scraping-dev/fd3f5a30-bfc7-11f0-a386-0e3dfe89eb63",
+    "serviceProviderAwsCfStackCreated": "2025-11-12T13:03:31.831Z",
+    "serviceProviderAwsCfStackUpdated": "2025-11-16T19:10:26.076Z",
+    "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
+    "serviceProviderAwsCfStackOutputs": [
+      {
+        "OutputKey": "ScrapeUnderscoretableLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:us-east-1:773506457076:function:api-web-scraping-dev-scrape_table:10",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-api-web-scraping-dev-ScrapeUnderscoretableLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ServiceEndpoint",
+        "OutputValue": "https://08s0t7vb6e.execute-api.us-east-1.amazonaws.com/dev",
+        "Description": "URL of the service endpoint",
+        "ExportName": "sls-api-web-scraping-dev-ServiceEndpoint"
+      },
+      {
+        "OutputKey": "ServerlessDeploymentBucketName",
+        "OutputValue": "serverless-framework-deployments-us-east-1-f41b8847-310a",
+        "ExportName": "sls-api-web-scraping-dev-ServerlessDeploymentBucketName"
+      }
+    ]
+  }
+}

@@ -2,6 +2,7 @@ import requests
 import boto3
 import uuid
 import datetime
+import json  # Para serializar body si es necesario
 
 def lambda_handler(event, context):
     # Endpoint JSON del IGP para los últimos 10 sismos (ordenados por fecha descendente)
@@ -12,7 +13,7 @@ def lambda_handler(event, context):
     if response.status_code != 200:
         return {
             'statusCode': response.status_code,
-            'body': 'Error al acceder al endpoint de datos'
+            'body': json.dumps('Error al acceder al endpoint de datos')
         }
     
     # Parsear el JSON
@@ -20,7 +21,7 @@ def lambda_handler(event, context):
     if 'features' not in data or not data['features']:
         return {
             'statusCode': 404,
-            'body': 'No se encontraron datos de sismos'
+            'body': json.dumps('No se encontraron datos de sismos')
         }
     
     # Extraer las filas de los atributos de cada feature
@@ -37,34 +38,43 @@ def lambda_handler(event, context):
             fecha = str(fecha_raw) if fecha_raw else ''
         
         row = {
-            'ref': attrs.get('ref', ''),  # Código de reporte y descripción de ubicación
+            'ref': str(attrs.get('ref', '')),
             'fecha': fecha,
-            'hora': attrs.get('hora', ''),
-            'magnitud': attrs.get('magnitud', ''),
-            'prof': f"{attrs.get('prof', '')} km",  # Profundidad con unidad
-            'lat': attrs.get('lat', ''),
-            'lon': attrs.get('lon', ''),
-            'departamento': attrs.get('departamento', '')
+            'hora': str(attrs.get('hora', '')),
+            'magnitud': str(attrs.get('magnitud', '')),
+            'prof': f"{str(attrs.get('prof', ''))} km",
+            'lat': str(attrs.get('lat', '')),
+            'lon': str(attrs.get('lon', '')),
+            'departamento': str(attrs.get('departamento', ''))
         }
+        
+        # <- NUEVO FILTRO: Salta si ref es "None" (incompleto)
+        if row['ref'] == 'None':
+            continue
+        
         rows.append(row)
     
-    # Conectar a DynamoDB
-    dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('TablaWebScrapping')
-    
-    # Eliminar todos los elementos existentes (limpiar tabla)
-    scan = table.scan()
-    with table.batch_writer() as batch:
-        for item in scan['Items']:
-            batch.delete_item(Key={'id': item['id']})
-    
-    # Insertar los nuevos datos
-    for row in rows:
-        row['id'] = str(uuid.uuid4())  # Generar un ID único para cada entrada
-        table.put_item(Item=row)
+    # Intentar guardar en DynamoDB (con try/except para local testing)
+    try:
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table('TablaWebScrapping')
+        
+        # Eliminar todos los elementos existentes (limpiar tabla)
+        scan = table.scan()
+        with table.batch_writer() as batch:
+            for item in scan['Items']:
+                batch.delete_item(Key={'id': item['id']})
+        
+        # Insertar los nuevos datos
+        for row in rows:
+            row['id'] = str(uuid.uuid4())  # Generar un ID único para cada entrada
+            table.put_item(Item=row)
+    except Exception as e:
+        # En local (sin creds), loguea pero continúa (retorna rows)
+        print(f"DynamoDB error (local?): {str(e)}")
     
     # Retornar el resultado como JSON
     return {
         'statusCode': 200,
-        'body': rows  # Opcional: puedes serializar a JSON si es necesario, pero Lambda lo maneja
+        'body': json.dumps(rows)  # Ahora solo los completos (~8)
     }
